@@ -4,9 +4,8 @@ const axios = require('axios');
 const cors = require('cors');
 const app = express();
 
-app.use(cors({ origin: true, credentials: true }));
+app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
 app.use(express.json());
-
 
 app.post('/api/meta', async (req, res) => {
   console.log('[/] X-CSRF-TOKEN TRYING GET...')
@@ -19,8 +18,9 @@ app.post('/api/meta', async (req, res) => {
   );
 
   const csrfToken = dummyRes.headers['x-csrf-token'];
-  console.log('CSRF Status:', dummyRes.status);
-  console.log('Headers:', Object.keys(dummyRes.headers));
+  console.log('CSRF Token:', csrfToken);
+  console.log('CSRF Status:', csrfResponse.status);
+  console.log('Headers:', Object.keys(csrfResponse.headers));
   console.log('X-CSRF-TOKEN:', csrfToken);
 
   if (!csrfToken) {
@@ -29,7 +29,7 @@ app.post('/api/meta', async (req, res) => {
       headers: dummyRes.headers 
     });
   }
-  
+
   res.json({ success: true, cookie: 'get is work' })
 })
 
@@ -38,26 +38,25 @@ app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
 
   try {
-    // ШАГ 1: Получаем X-CSRF-TOKEN (даже без логина)
-    const csrfResponse = await axios.post(
-      'https://auth.roblox.com/v2/metadata',
-      {},
-      {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        maxRedirects: 0,
-        validateStatus: () => true, // Принимаем любой статус
-      }
+
+    console.log('[/] X-CSRF-TOKEN TRYING GET...')
+
+    // ШАГ 1: Получаем X-CSRF-TOKEN через /v2/login (с фейковыми данными)
+    const dummyRes = await axios.post(
+      'https://auth.roblox.com/v2/login',
+      { ctype: 1, cvalue: 'dummy', password: 'dummy' },
+      { headers: {}, validateStatus: () => true }
     );
 
-    console.log(csrfResponse.headers)
+    const csrfToken = dummyRes.headers['x-csrf-token'];
 
-    const csrfToken = csrfResponse.headers['x-csrf-token'];
-    console.log('CSRF Status:', csrfResponse.status);
-    console.log('Headers:', Object.keys(csrfResponse.headers));
-    console.log('X-CSRF-TOKEN:', csrfToken);
-    
+    if (!csrfToken) {
+      return res.status(500).json({
+        error: 'X-CSRF-TOKEN not found. Roblox blocked request.',
+        receivedHeaders: csrfResponse.headers,
+      });
+    }
+
     console.log('[|] X-CSRF-TOKEN GET SUCCESSFULY...')
 
     console.log('[/] LOGIN TRYING...')
@@ -66,13 +65,14 @@ app.post('/api/login', async (req, res) => {
     const loginResponse = await axios.post(
       'https://auth.roblox.com/v2/login',
       {
-        ctype: 'Username',
+        ctype: 1,
         cvalue: username,
         password: password,
       },
       {
         headers: {
           'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': csrfToken,
         },
         maxRedirects: 0,
         validateStatus: () => true,
@@ -85,10 +85,17 @@ app.post('/api/login', async (req, res) => {
     const setCookie = loginResponse.headers['set-cookie'];
     let robloxSecurity = null;
 
+    console.log(setCookie) 
+
     if (setCookie) {
       const cookie = setCookie.find(c => c.includes('.ROBLOSECURITY'));
+
+      console.log(cookie)
+
       if (cookie) {
         robloxSecurity = cookie.split(';')[0].split('=')[1];
+
+        console.log(robloxSecurity)
       }
     }
 
@@ -119,10 +126,4 @@ const PORT = 3001;
 app.listen(PORT, () => {
   console.log(`Proxy server running on http://localhost:${PORT}`);
   console.log(`No login required — CSRF generated automatically`);
-
 });
-
-
-
-
-
