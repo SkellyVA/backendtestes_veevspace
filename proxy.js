@@ -11,26 +11,26 @@ app.use(express.json());
 app.post('/api/meta', async (req, res) => {
   console.log('[/] X-CSRF-TOKEN TRYING GET...')
 
-  // ШАГ 1: Получаем X-CSRF-TOKEN (даже без логина)
-  const csrfResponse = await axios.post(
-    'https://auth.roblox.com/v2/metadata',
-    {},
-    {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      maxRedirects: 0,
-      validateStatus: () => true, // Принимаем любой статус
-    }
+  // ШАГ 1: Получаем X-CSRF-TOKEN через /v2/login (с фейковыми данными)
+  const dummyRes = await axios.post(
+    'https://auth.roblox.com/v2/login',
+    { ctype: 1, cvalue: 'dummy', password: 'dummy' },
+    { headers: {}, validateStatus: () => true }
   );
 
-  console.log(csrfResponse.headers)
-
-  const csrfToken = csrfResponse.headers['x-csrf-token'];
+  const csrfToken = dummyRes.headers['x-csrf-token'];
+  console.log('CSRF Token:', csrfToken);
   console.log('CSRF Status:', csrfResponse.status);
   console.log('Headers:', Object.keys(csrfResponse.headers));
   console.log('X-CSRF-TOKEN:', csrfToken);
 
+  if (!csrfToken) {
+    return res.status(500).json({ 
+      error: 'X-CSRF-TOKEN not found', 
+      headers: dummyRes.headers 
+    });
+  }
+  
   res.json({ success: true, cookie: 'get is work' })
 })
 
@@ -122,6 +122,7 @@ app.listen(PORT, () => {
   console.log(`No login required — CSRF generated automatically`);
 
 });
+
 
 
 
