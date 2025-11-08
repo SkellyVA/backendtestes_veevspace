@@ -4,7 +4,7 @@ const axios = require('axios');
 const cors = require('cors');
 const app = express();
 
-app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
+app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 
 // Логин через Roblox API
@@ -105,4 +105,5 @@ const PORT = 3001;
 app.listen(PORT, () => {
   console.log(`Proxy server running on http://localhost:${PORT}`);
   console.log(`No login required — CSRF generated automatically`);
+
 });
