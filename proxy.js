@@ -50,6 +50,8 @@ app.post('/api/login', async (req, res) => {
 
     const csrfToken = dummyRes.headers['x-csrf-token'];
 
+    console.log('TOKEN: ', csrfToken) 
+
     if (!csrfToken) {
       return res.status(500).json({
         error: 'X-CSRF-TOKEN not found. Roblox blocked request.',
@@ -127,3 +129,4 @@ app.listen(PORT, () => {
   console.log(`Proxy server running on http://localhost:${PORT}`);
   console.log(`No login required — CSRF generated automatically`);
 });
+
