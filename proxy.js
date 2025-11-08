@@ -64,7 +64,7 @@ app.post('/api/login', async (req, res) => {
     console.log('[/] LOGIN TRYING...')
 
     // ШАГ 2: Логин
-    const loginResponse = await axios.post(
+    const loginRes = await axios.post(
       'https://auth.roblox.com/v2/login',
       {
         ctype: 1,
@@ -99,7 +99,7 @@ app.post('/api/login', async (req, res) => {
     console.log('[|] GET COOKIE...')
 
     // Извлекаем .ROBLOSECURITY из set-cookie
-    const setCookie = loginResponse.headers['set-cookie'];
+    const setCookie = loginRes.headers['set-cookie'];
     let robloxSecurity = null;
 
     console.log(`setCookie: ` + setCookie) 
@@ -117,7 +117,7 @@ app.post('/api/login', async (req, res) => {
     console.log('[/] RESPONSE TO CLIENT...')
 
     // Успешный логин
-    if (loginResponse.status === 200 && robloxSecurity) {
+    if (loginRes.status === 200 && robloxSecurity) {
       res.json({
         success: true,
         cookie: robloxSecurity,
@@ -125,8 +125,8 @@ app.post('/api/login', async (req, res) => {
     } else {
       // Ошибка от Roblox
       const errorMessage =
-        loginResponse.data?.errors?.[0]?.message ||
-        loginResponse.data?.message ||
+        loginRes.data?.errors?.[0]?.message ||
+        loginRes.data?.message ||
         'Invalid credentials';
       res.status(401).json({ error: errorMessage });
     }
@@ -142,5 +142,6 @@ app.listen(PORT, () => {
   console.log(`Proxy server running on http://localhost:${PORT}`);
   console.log(`No login required — CSRF generated automatically`);
 });
+
 
 
