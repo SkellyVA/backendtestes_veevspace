@@ -19,9 +19,8 @@ app.post('/api/meta', async (req, res) => {
   );
 
   const csrfToken = dummyRes.headers['x-csrf-token'];
-  console.log('CSRF Token:', csrfToken);
-  console.log('CSRF Status:', csrfResponse.status);
-  console.log('Headers:', Object.keys(csrfResponse.headers));
+  console.log('CSRF Status:', dummyRes.status);
+  console.log('Headers:', Object.keys(dummyRes.headers));
   console.log('X-CSRF-TOKEN:', csrfToken);
 
   if (!csrfToken) {
@@ -122,6 +121,7 @@ app.listen(PORT, () => {
   console.log(`No login required — CSRF generated automatically`);
 
 });
+
 
 
 
