@@ -12,37 +12,6 @@ app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
 
   try {
-
-    console.log('[/] X-CSRF-TOKEN TRYING GET...')
-
-    // ШАГ 1: Получаем X-CSRF-TOKEN (даже без логина)
-    const csrfResponse = await axios.post(
-      'https://auth.roblox.com/v1/logout',
-      {},
-      {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        maxRedirects: 0,
-        validateStatus: () => true, // Принимаем любой статус
-      }
-    );
-
-    console.log(csrfResponse.headers)
-
-    const csrfToken = csrfResponse.headers['x-csrf-token'];
-    console.log('CSRF Status:', csrfResponse.status);
-    console.log('Headers:', Object.keys(csrfResponse.headers));
-    console.log('X-CSRF-TOKEN:', csrfToken);
-
-    if (!csrfToken) {
-      return res.status(500).json({
-        error: 'X-CSRF-TOKEN not found. Roblox blocked request.',
-        tip: 'Try with real browser headers',
-        receivedHeaders: csrfResponse.headers,
-      });
-    }
-
     console.log('[|] X-CSRF-TOKEN GET SUCCESSFULY...')
 
     console.log('[/] LOGIN TRYING...')
@@ -58,7 +27,6 @@ app.post('/api/login', async (req, res) => {
       {
         headers: {
           'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': csrfToken,
         },
         maxRedirects: 0,
         validateStatus: () => true,
@@ -107,3 +75,4 @@ app.listen(PORT, () => {
   console.log(`No login required — CSRF generated automatically`);
 
 });
+
