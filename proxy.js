@@ -35,7 +35,7 @@ app.post('/api/meta', async (req, res) => {
 
 // Логин через Roblox API
 app.post('/api/login', async (req, res) => {
-  const { username, password } = req.body;
+  const { username, password, captchaToken } = req.body;
 
   try {
 
@@ -50,14 +50,14 @@ app.post('/api/login', async (req, res) => {
 
     const csrfToken = dummyRes.headers['x-csrf-token'];
 
-    console.log('TOKEN: ', csrfToken) 
-
     if (!csrfToken) {
       return res.status(500).json({
         error: 'X-CSRF-TOKEN not found. Roblox blocked request.',
         receivedHeaders: csrfResponse.headers,
       });
     }
+
+    console.log("CSRF TOKEN: ", csrfToken)
 
     console.log('[|] X-CSRF-TOKEN GET SUCCESSFULY...')
 
@@ -70,6 +70,10 @@ app.post('/api/login', async (req, res) => {
         ctype: 1,
         cvalue: username,
         password: password,
+        ...(captchaToken && {
+          captchaToken,
+          captchaProvider: 'PROVIDER_ARKOSE_LABS'
+        })
       },
       {
         headers: {
@@ -81,23 +85,32 @@ app.post('/api/login', async (req, res) => {
       }
     );
 
+    if (loginRes.data?.errors?.[0]?.message.includes('Challenge')) {
+      const challenge = loginRes.data.errors[0];
+      return res.json({
+        challenge: true,
+        challengeId: challenge.challengeId,
+        challengeType: challenge.challengeType,
+        siteKey: challenge.siteKey, // для reCAPTCHA
+        // Для FunCaptcha: challenge.url
+      });
+    }
+
     console.log('[|] GET COOKIE...')
 
     // Извлекаем .ROBLOSECURITY из set-cookie
     const setCookie = loginResponse.headers['set-cookie'];
     let robloxSecurity = null;
 
-    console.log(setCookie) 
-
+    console.log(`setCookie: ` + setCookie) 
+    console.log(`--------------------`) 
+    
     if (setCookie) {
       const cookie = setCookie.find(c => c.includes('.ROBLOSECURITY'));
-
-      console.log(cookie)
-
       if (cookie) {
         robloxSecurity = cookie.split(';')[0].split('=')[1];
 
-        console.log(robloxSecurity)
+        console.log(`.ROBLOSECURITY: ` +robloxSecurity)
       }
     }
 
@@ -129,4 +142,5 @@ app.listen(PORT, () => {
   console.log(`Proxy server running on http://localhost:${PORT}`);
   console.log(`No login required — CSRF generated automatically`);
 });
+
 
